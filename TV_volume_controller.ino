@@ -9,7 +9,8 @@ Modified to raise volume when commercial is over (volume is too low).
 Also modified to read peak-to-peak sound values - from Adafruit "MeasuringSoundLevels" sketch.
 A0 is from microphone analog output.
 */
- 
+
+#include <PinDefinitionsAndMore.h>
 #include <IRremote.h>
 IRsend irsend; // instantiate IR object
  
@@ -92,7 +93,7 @@ int getAmbientSoundLevel()
   int sampleAvg = 0;
   int sampleSum = 0;
  
-  for (int i = 0; i <= 99; i++) {
+  for (int i = 0; i <= 9; i++) {
     // collect data for 50 mS
     while (millis() - startMillis < sampleWindow)
     {
