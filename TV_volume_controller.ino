@@ -10,9 +10,9 @@ Also modified to read peak-to-peak sound values - from Adafruit "MeasuringSoundL
 A0 is from microphone analog output.
 */
 
-#include <PinDefinitionsAndMore.h>
+//#include <PinDefinitionsAndMore.h>
 #include <IRremote.h>
-IRsend irsend; // instantiate IR object
+//IRsend irsend; // instantiate IR object
  
 #define NOISE_LEVEL_MAX    200        // Max level of noise to detect from 0 to 1023
 #define NOISE_LEVEL_MIN    80        // Min level of noise to detect from 0 to 1023
@@ -28,7 +28,7 @@ IRsend irsend; // instantiate IR object
 int AmbientSoundLevel = 100;            // Microphone sensor initial value
 const int sampleWindow = 500;          // Sample window width in mS (50 mS = 20Hz)
 long time = 0;
-long send_interval = 0;
+long send_interval = 6000;
 
 
 void setup()
@@ -113,7 +113,7 @@ int getAmbientSoundLevel()
     peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
     samples[i] = peakToPeak;
   }
-  for (int i = 0; i <= 99; i++) {
+  for (int i = 0; i <= 9; i++) {
     sampleSum = sampleSum + samples[i];
   }
   return sampleAvg;
