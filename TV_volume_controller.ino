@@ -14,9 +14,9 @@ A0 is from microphone analog output.
 #include <IRremote.h>
 //IRsend irsend; // instantiate IR object
  
-#define NOISE_LEVEL_MAX    400       // Max level of noise to detect from 0 to 1023
-#define NOISE_LEVEL_MIN    110        // Min level of noise to detect from 0 to 1023
-#define MUTE_LEVEL_MIN     60        // Min level of noise to catch mute
+#define NOISE_LEVEL_MAX    340       // Max level of noise to detect from 0 to 1023
+#define NOISE_LEVEL_MIN    170        // Min level of noise to detect from 0 to 1023
+#define MUTE_LEVEL_MIN     100        // Min level of noise to catch mute
 #define REPEAT_TX          3          // how many times to transmit the IR remote code
 #define IR_SEND_PIN         3
 
@@ -26,7 +26,7 @@ A0 is from microphone analog output.
 //#define REMOTE_BIT         12         // how many bits is remote code?
  
 #define LED                13         // pin for LED used to blink when volume too high
-int AmbientSoundLevel = 200;            // Microphone sensor initial value
+int AmbientSoundLevel = 260;            // Microphone sensor initial value
 const int sampleWindow = 50;          // Sample window width in mS (50 mS = 20Hz)
 long time_sent = 0;
 long send_interval = 000;
@@ -61,8 +61,13 @@ void loop()
       digitalWrite(LED, HIGH); // LED on
       delay(200);
       Serial.println("LOWERing volume...");
-      
-      for (int i = 0; i < 2; i++) {
+      int t = 1;
+      if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 120)){ // compare to noise level threshold you decide
+        t = 4;
+              Serial.println("doin it four");
+
+      }
+      for (int i = 0; i < t; i++) {
         IrSender.sendSony(0x30, 0x13, 2, 15); //volume down
 
 
@@ -81,7 +86,7 @@ void loop()
         IrSender.sendSony(0x30, 0x12, 2, 15); //volume up 
 
 
-        delay(40);
+        delay(100);
       }
     }
     else if ((AmbientSoundLevel < MUTE_LEVEL_MIN))
@@ -104,7 +109,7 @@ int getAmbientSoundLevel()
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
   unsigned int sample;
-  unsigned int samples[200];             // Array to store samples
+  unsigned int samples[100];             // Array to store samples
   int sampleAvg = 0;
   long sampleSum = 0;
   unsigned int exp_sample;
@@ -113,7 +118,7 @@ int getAmbientSoundLevel()
   unsigned int experimentalsamples[10];
 
  
-  for (int i = 0; i <= 200; i++) {
+  for (int i = 0; i <= 100; i++) {
     // collect data for 50 mS     
       startMillis = millis();
 
@@ -140,7 +145,7 @@ int getAmbientSoundLevel()
     //Serial.println(i);
 
   }
-  for (int i = 0; i <= 200; i++) {
+  for (int i = 0; i <= 100; i++) {
     
     sampleSum = sampleSum + samples[i];
     //experimentalsamplesum = experimentalsamplesum + experimentalsamples[i];
@@ -153,7 +158,7 @@ int getAmbientSoundLevel()
 
 
   }
-  sampleAvg = sampleSum/200;
+  sampleAvg = sampleSum/100;
   //experimentalsampleavg = experimentalsamplesum/10;
    //Serial.print("sampleavg: ");
 
