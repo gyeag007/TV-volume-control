@@ -62,11 +62,19 @@ void loop()
       delay(200);
       Serial.println("LOWERing volume...");
       int t = 1;
-      if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 120)){ // compare to noise level threshold you decide
+      if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 200)){ // compare to noise level threshold you decide
         t = 4;
               Serial.println("doin it four");
-
       }
+      else if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 160)){ // compare to noise level threshold you decide
+        t = 3;
+              Serial.println("doin it 3");
+      }
+      else if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 120)){ // compare to noise level threshold you decide
+        t = 2;
+              Serial.println("doin it 2");
+      }
+      
       for (int i = 0; i < t; i++) {
         IrSender.sendSony(0x30, 0x13, 2, 15); //volume down
 
