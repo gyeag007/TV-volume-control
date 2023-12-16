@@ -115,7 +115,7 @@ void loop()
  
 int getAmbientSoundLevel()
 {
-  unsigned long startMillis = millis(); // Start of sample window
+  unsigned long startMillis; // Start of sample window
   unsigned int peakToPeak = 0;   // peak-to-peak level
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
@@ -123,21 +123,15 @@ int getAmbientSoundLevel()
   unsigned int samples[100];             // Array to store samples
   int sampleAvg = 0;
   long sampleSum = 0;
-  //unsigned int exp_sample;
-  //int experimentalsamplesum = 0;
-  //int experimentalsampleavg = 0;
-  //unsigned int experimentalsamples[10];
-  //prevSampleAvg = (AmbientSoundLevel * 0.7) + (sampleAvg * 0.3);
  
-  for (int i = 0; i <= 100; i++) {
-    // collect data for 50 mS     
-      startMillis = millis();
+  for (int i = 0; i <= 100; i++) {   
+    startMillis = millis(); // Start of sample window
 
-    while (millis() - startMillis < sampleWindow)
+    while (millis() - startMillis < sampleWindow) // collect data for 50 mS  
     {
       sample = analogRead(0);
-      //exp_sample = analogRead(0);
       //Serial.println(sample);
+
       if (sample < 1024 && sample > 0)  // toss out spurious readings
       {
         if (sample > signalMax)
@@ -152,29 +146,16 @@ int getAmbientSoundLevel()
     }
     peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
     samples[i] = peakToPeak;
-    //experimentalsamples[i] = exp_sample;
-    //Serial.println(i);
 
   }
   for (int i = 0; i <= 100; i++) {
-    
     sampleSum = sampleSum + samples[i];
-    //experimentalsamplesum = experimentalsamplesum + experimentalsamples[i];
-                    //Serial.println(i);
-
-         // Serial.println(samples[i]);
-             //Serial.print("sampleSum: ");
-
-               // Serial.println(sampleSum);
-
-
   }
-  sampleAvg = sampleSum/100;
-  //experimentalsampleavg = experimentalsamplesum/10;
-   Serial.print("sampleavg: ");
 
- Serial.println(sampleAvg);
-  sampleAvg = (sampleAvg * bias) + (AmbientSoundLevel * (1 - bias));
+  sampleAvg = sampleSum/100;
+  Serial.print("sampleavg: ");
+  Serial.println(sampleAvg);
+  sampleAvg = (sampleAvg * bias) + (AmbientSoundLevel * (1- bias));
 
   return sampleAvg;
 }
