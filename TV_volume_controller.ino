@@ -14,8 +14,8 @@ A0 is from microphone analog output.
 #include <IRremote.h>
 //IRsend irsend; // instantiate IR object
  
-#define NOISE_LEVEL_MAX    340       // Max level of noise to detect from 0 to 1023
-#define NOISE_LEVEL_MIN    170        // Min level of noise to detect from 0 to 1023
+#define NOISE_LEVEL_MAX    360       // Max level of noise to detect from 0 to 1023
+#define NOISE_LEVEL_MIN    220        // Min level of noise to detect from 0 to 1023
 #define MUTE_LEVEL_MIN     100        // Min level of noise to catch mute
 #define REPEAT_TX          3          // how many times to transmit the IR remote code
 #define IR_SEND_PIN         3
@@ -30,7 +30,8 @@ int AmbientSoundLevel = 260;            // Microphone sensor initial value
 const int sampleWindow = 50;          // Sample window width in mS (50 mS = 20Hz)
 long time_sent = 0;
 long send_interval = 000;
-
+float bias = 0.7;
+//int prevSampleAvg = 260;
 
 void setup()
 {
@@ -51,9 +52,11 @@ void loop()
 
 
   if(millis() - time_sent >= send_interval){
-    Serial.print("Ambient sound level: ");
+    
     AmbientSoundLevel = getAmbientSoundLevel();
+    Serial.print("Ambient sound level: ");
     Serial.println(AmbientSoundLevel);
+    //AmbientSoundLevel = (AmbientSoundLevel * bias) + (prevSampleAvg * (1 - bias));
 
     if (AmbientSoundLevel > NOISE_LEVEL_MAX){ // compare to noise level threshold you decide
       Serial.print("sound level is ABOVE maximum of ");
@@ -120,11 +123,11 @@ int getAmbientSoundLevel()
   unsigned int samples[100];             // Array to store samples
   int sampleAvg = 0;
   long sampleSum = 0;
-  unsigned int exp_sample;
-  int experimentalsamplesum = 0;
-  int experimentalsampleavg = 0;
-  unsigned int experimentalsamples[10];
-
+  //unsigned int exp_sample;
+  //int experimentalsamplesum = 0;
+  //int experimentalsampleavg = 0;
+  //unsigned int experimentalsamples[10];
+  //prevSampleAvg = (AmbientSoundLevel * 0.7) + (sampleAvg * 0.3);
  
   for (int i = 0; i <= 100; i++) {
     // collect data for 50 mS     
@@ -168,9 +171,10 @@ int getAmbientSoundLevel()
   }
   sampleAvg = sampleSum/100;
   //experimentalsampleavg = experimentalsamplesum/10;
-   //Serial.print("sampleavg: ");
+   Serial.print("sampleavg: ");
 
- //Serial.println(sampleAvg);
+ Serial.println(sampleAvg);
+  sampleAvg = (sampleAvg * bias) + (AmbientSoundLevel * (1 - bias));
 
   return sampleAvg;
 }
