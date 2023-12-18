@@ -14,9 +14,9 @@ A0 is from microphone analog output.
 #include <IRremote.h>
 //IRsend irsend; // instantiate IR object
  
-#define NOISE_LEVEL_MAX    360       // Max level of noise to detect from 0 to 1023
-#define NOISE_LEVEL_MIN    220        // Min level of noise to detect from 0 to 1023
-#define MUTE_LEVEL_MIN     100        // Min level of noise to catch mute
+//#define NOISE_LEVEL_MAX    340       // Max level of noise to detect from 0 to 1023
+//#define NOISE_LEVEL_MIN    220        // Min level of noise to detect from 0 to 1023
+//#define MUTE_LEVEL_MIN     100        // Min level of noise to catch mute
 #define REPEAT_TX          3          // how many times to transmit the IR remote code
 #define IR_SEND_PIN         3
 
@@ -25,18 +25,50 @@ A0 is from microphone analog output.
 //#define VOL_UP_CODE_L      0x490      // volume down remote code to transmit. Living room
 //#define REMOTE_BIT         12         // how many bits is remote code?
  
-#define LED                13         // pin for LED used to blink when volume too high
-int AmbientSoundLevel = 260;            // Microphone sensor initial value
+#define LED                13  
+#define SWITCH_READ        8
+#define SWITCH_SEND        7
+int AmbientSoundLevel = 140;            // Microphone sensor initial value
 const int sampleWindow = 50;          // Sample window width in mS (50 mS = 20Hz)
 long time_sent = 0;
 long send_interval = 000;
 float bias = 0.7;
-//int prevSampleAvg = 260;
+int loudMode = LOW;
+
+int NOISE_LEVEL_MAX = 200; //set these to zero
+int NOISE_LEVEL_MIN = 120;
+int MUTE_LEVEL_MIN = 80;
 
 void setup()
 {
   pinMode(LED, OUTPUT);
   Serial.begin(9600);
+
+  pinMode(SWITCH_READ, INPUT);
+  pinMode(SWITCH_SEND, OUTPUT);
+  digitalWrite(SWITCH_SEND, HIGH);
+  loudMode = digitalRead(SWITCH_READ);
+  //delay(10);
+  //Serial.println("loudMode: " + loudMode);
+
+  if(loudMode){
+    Serial.println("loudMode true");
+
+    NOISE_LEVEL_MAX = 280;
+    NOISE_LEVEL_MIN = 140;
+    MUTE_LEVEL_MIN = 90;
+    digitalWrite(LED, HIGH);  // LED on
+
+  }
+  else{
+    Serial.println("regular mode");
+
+    NOISE_LEVEL_MAX = 160;
+    NOISE_LEVEL_MIN = 110;
+    MUTE_LEVEL_MIN = 90;
+  digitalWrite(LED, LOW); // LED off
+  }
+
   Serial.println("TV Volume Guard");
   Serial.print("NOISE_LEVEL_MIN is ");
   Serial.println(NOISE_LEVEL_MIN);
@@ -45,10 +77,13 @@ void setup()
   Serial.print("Ambient sound level: ");
   Serial.println(AmbientSoundLevel);
   Serial.println("-------------------");
+
+
 }
  
 void loop()
 {
+
 
 
   if(millis() - time_sent >= send_interval){
@@ -61,7 +96,7 @@ void loop()
     if (AmbientSoundLevel > NOISE_LEVEL_MAX){ // compare to noise level threshold you decide
       Serial.print("sound level is ABOVE maximum of ");
       Serial.println(NOISE_LEVEL_MAX);
-      digitalWrite(LED, HIGH); // LED on
+      //digitalWrite(LED, HIGH); // LED on
       delay(200);
       Serial.println("LOWERing volume...");
       int t = 1;
@@ -90,7 +125,7 @@ void loop()
     {
       Serial.print("sound level is below minimum of ");
       Serial.println(NOISE_LEVEL_MIN);
-      digitalWrite(LED, LOW); // LED off
+      //digitalWrite(LED, LOW); // LED off
       delay(200);
       Serial.println("raising volume...");
       for (int i = 0; i < 1; i++) {
@@ -108,7 +143,7 @@ void loop()
     {
       Serial.println("just right...");
     }
-    digitalWrite(LED, LOW); // LED off
+    //digitalWrite(LED, LOW); // LED off
     time_sent = millis();
   }
 }
@@ -153,7 +188,7 @@ int getAmbientSoundLevel()
   }
 
   sampleAvg = sampleSum/100;
-  Serial.print("sampleavg: ");
+  Serial.print("sampleAvg: ");
   Serial.println(sampleAvg);
   sampleAvg = (sampleAvg * bias) + (AmbientSoundLevel * (1- bias));
 
