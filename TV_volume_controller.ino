@@ -28,16 +28,24 @@ A0 is from microphone analog output.
 #define LED                13  
 #define SWITCH_READ        8
 #define SWITCH_SEND        7
-int AmbientSoundLevel = 140;            // Microphone sensor initial value
+int AmbientSoundLevel = 280;            // Microphone sensor initial value
 const int sampleWindow = 50;          // Sample window width in mS (50 mS = 20Hz)
 long time_sent = 0;
 long send_interval = 000;
 float bias = 0.7;
 int loudMode = LOW;
+int avgSampleSum = 0;
+int avgSamples[100];
+int totalAvg = 0;
+int avgCount = 0;
+int raiseCount = 0;
+int lowerCount = 0;
+int rightCount = 0;
+int muteCount = 0;
 
-int NOISE_LEVEL_MAX = 200; //set these to zero
-int NOISE_LEVEL_MIN = 120;
-int MUTE_LEVEL_MIN = 80;
+int NOISE_LEVEL_MAX = 0; //set these to zero
+int NOISE_LEVEL_MIN = 0;
+int MUTE_LEVEL_MIN = 0;
 
 void setup()
 {
@@ -52,21 +60,23 @@ void setup()
   //Serial.println("loudMode: " + loudMode);
 
   if(loudMode){
-    Serial.println("loudMode true");
+    Serial.println("loudMode true"); //riffMode
 
-    NOISE_LEVEL_MAX = 280;
-    NOISE_LEVEL_MIN = 140;
-    MUTE_LEVEL_MIN = 90;
+    NOISE_LEVEL_MAX = 360;  //350   // rifftrax 326 269 277   choosing 280 with 130 range, avg after 287...setting bias to 0.3 with 50 rang, avg after 276
+    NOISE_LEVEL_MIN = 200;   //250
+    MUTE_LEVEL_MIN = 50;
     digitalWrite(LED, HIGH);  // LED on
+    bias = 0.3;
 
   }
   else{
-    Serial.println("regular mode");
+    Serial.println("regular mode"); // zoe mode
 
-    NOISE_LEVEL_MAX = 160;
-    NOISE_LEVEL_MIN = 110;
-    MUTE_LEVEL_MIN = 90;
-  digitalWrite(LED, LOW); // LED off
+    NOISE_LEVEL_MAX = 200; //340      280 for big bang around people  //big bang zoe level 150
+    NOISE_LEVEL_MIN = 100; //220
+    MUTE_LEVEL_MIN = 50;
+    digitalWrite(LED, LOW); // LED off
+    bias = 0.5;
   }
 
   Serial.println("TV Volume Guard");
@@ -100,22 +110,22 @@ void loop()
       delay(200);
       Serial.println("LOWERing volume...");
       int t = 1;
-      if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 200)){ // compare to noise level threshold you decide
+      if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 150)){ // compare to noise level threshold you decide
         t = 4;
               Serial.println("doin it four");
       }
-      else if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 160)){ // compare to noise level threshold you decide
+      else if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 100)){ // compare to noise level threshold you decide
         t = 3;
               Serial.println("doin it 3");
       }
-      else if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 120)){ // compare to noise level threshold you decide
+      else if (AmbientSoundLevel > (NOISE_LEVEL_MAX + 50)){ // compare to noise level threshold you decide
         t = 2;
               Serial.println("doin it 2");
       }
       
       for (int i = 0; i < t; i++) {
         IrSender.sendSony(0x30, 0x13, 2, 15); //volume down
-
+        lowerCount = lowerCount + 1;
 
         delay(100);
       }
@@ -130,7 +140,7 @@ void loop()
       Serial.println("raising volume...");
       for (int i = 0; i < 1; i++) {
         IrSender.sendSony(0x30, 0x12, 2, 15); //volume up 
-
+        raiseCount = raiseCount + 1;
 
         delay(100);
       }
@@ -138,10 +148,12 @@ void loop()
     else if ((AmbientSoundLevel < MUTE_LEVEL_MIN))
     {
       Serial.println("muted");
+      muteCount = muteCount + 1;
     }
     else 
     {
       Serial.println("just right...");
+      rightCount = rightCount + 1;
     }
     //digitalWrite(LED, LOW); // LED off
     time_sent = millis();
@@ -159,7 +171,7 @@ int getAmbientSoundLevel()
   int sampleAvg = 0;
   long sampleSum = 0;
  
-  for (int i = 0; i <= 100; i++) {   
+  for (int i = 0; i < 100; i++) {   
     startMillis = millis(); // Start of sample window
 
     while (millis() - startMillis < sampleWindow) // collect data for 50 mS  
@@ -183,7 +195,7 @@ int getAmbientSoundLevel()
     samples[i] = peakToPeak;
 
   }
-  for (int i = 0; i <= 100; i++) {
+  for (int i = 0; i < 100; i++) {
     sampleSum = sampleSum + samples[i];
   }
 
@@ -191,6 +203,42 @@ int getAmbientSoundLevel()
   Serial.print("sampleAvg: ");
   Serial.println(sampleAvg);
   sampleAvg = (sampleAvg * bias) + (AmbientSoundLevel * (1- bias));
+  avgSamples[avgCount] = sampleAvg;
+  avgCount = avgCount + 1;
+  Serial.print("avgCount: ");
+  Serial.println(avgCount);
+
+  if(avgCount%100 == 0){
+    for (int i = 0; i < 100; i++) {
+      Serial.print("avgSamples[i]: ");
+      Serial.println(avgSamples[i]);
+      avgSampleSum = avgSampleSum + avgSamples[i];
+
+    }
+    totalAvg = avgSampleSum/100;
+    Serial.println("==================================");
+    Serial.println("==================================");
+    Serial.print("totalAvg: ");
+    Serial.println(totalAvg);
+    Serial.println("==================================");
+    Serial.println("==================================");
+    Serial.print("lowerCount: ");
+    Serial.println(lowerCount);
+    Serial.print("raiseCount: ");
+    Serial.println(raiseCount);
+    Serial.print("rightCount: ");
+    Serial.println(rightCount);
+    Serial.print("muteCount: ");
+    Serial.println(muteCount);
+    memset(avgSamples, 0, sizeof(avgSamples));
+    avgCount = 0;
+    avgSampleSum = 0;
+    raiseCount = 0;
+    lowerCount = 0;
+    rightCount = 0;
+    muteCount = 0;
+  }
+  
 
   return sampleAvg;
 }
